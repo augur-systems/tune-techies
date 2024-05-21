@@ -14,7 +14,7 @@
     "test:watch": "jest --watch"
   },
   "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
+    "**/*": "prettier --write --ignore-unknown ."
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.1.9",
