@@ -5,3 +5,5 @@ dist/
 docs/
 node_modules/
 public/
+amplify/
+README.md
