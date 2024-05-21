@@ -9,3 +9,4 @@ amplify/
 amplify-outputs.json
 amplify.yml
 README.md
+coverage/
