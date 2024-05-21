@@ -5,7 +5,10 @@ const schema = a.schema({
     .model({
       title: a.string().required(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.owner().to(["read", "create", "update", "delete"]), 
+      allow.guest().to(["read"])]
+    ),
 });
 
 export type Schema = ClientSchema<typeof schema>;
