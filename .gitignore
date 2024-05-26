@@ -39,3 +39,19 @@ next-env.d.ts
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+
+# build artifacts for worklets
+/public/worklets/*.js
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Optional REPL history
+.node_repl_history
