@@ -1,2 +1,3 @@
 import { Tuner } from './Tuner'
-export { Tuner }
+import { ConfigureAmplifyClientSide } from './ConfigureAmplifyClientSide'
+export { Tuner, ConfigureAmplifyClientSide }
