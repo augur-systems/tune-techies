@@ -55,3 +55,6 @@ amplifyconfiguration*
 
 # Optional REPL history
 .node_repl_history
+
+*storybook.log
+.storybook
