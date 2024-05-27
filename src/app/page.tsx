@@ -1,16 +1,26 @@
 'use client'
 
-import './app.css'
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+
+import CssBaseline from '@mui/material/CssBaseline'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
+
 import { Amplify } from 'aws-amplify'
 import outputs from '@/amplify_outputs.json'
-import '@aws-amplify/ui-react/styles.css'
 
 Amplify.configure(outputs)
 
 export default function App() {
   return (
-    <main>
-      <h1>Tune Techies</h1>
-    </main>
+    <>
+      <CssBaseline />
+      <Container>
+        <Typography variant='h1'>Tune Techies</Typography>
+      </Container>
+    </>
   )
 }
