@@ -1,2 +1,2 @@
-import { Tuner } from './Tuner';
+import { Tuner } from './Tuner'
 export { Tuner }

@@ -1,16 +1,23 @@
 'use client'
 
-import React from 'react';
-import Box from '@mui/material/Box';
+import React from 'react'
+import Box from '@mui/material/Box'
 
 interface GaugeProps {
-  deviation: number;
+  deviation: number
 }
 
 export function Gauge({ deviation }: GaugeProps) {
-  const rotation = deviation * 1.8; // Scale the deviation to fit the gauge
+  const rotation = deviation * 1.8 // Scale the deviation to fit the gauge
   return (
-    <Box sx={{ position: 'relative', height: '150px', width: '150px', margin: '0 auto' }}>
+    <Box
+      sx={{
+        position: 'relative',
+        height: '150px',
+        width: '150px',
+        margin: '0 auto',
+      }}
+    >
       <Box
         sx={{
           position: 'absolute',
@@ -37,7 +44,7 @@ export function Gauge({ deviation }: GaugeProps) {
         }}
       />
     </Box>
-  );
-};
+  )
+}
 
-export default Gauge;
+export default Gauge

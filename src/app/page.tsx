@@ -5,7 +5,7 @@ import { Tuner } from '@/components'
 export default function App() {
   return (
     <Container>
-      <Typography variant='h1'>Tune Techies</Typography>
+      <Typography variant="h1">Tune Techies</Typography>
       <Tuner />
     </Container>
   )
