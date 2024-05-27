@@ -23,7 +23,8 @@
       "@/*": ["src/*"],
       "@/components/*": ["src/components/*"],
       "@/hooks/*": ["src/hooks/*"],
-      "@/lib/*": ["src/lib/*"]
+      "@/lib/*": ["src/lib/*"],
+      "@/themes/*": ["src/themes/*"]
     }
   },
   "include": [

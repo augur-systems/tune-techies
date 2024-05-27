@@ -1,5 +1,20 @@
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+
+import { Amplify } from 'aws-amplify'
+import outputs from '@/amplify_outputs.json'
+
+import CssBaseline from '@mui/material/CssBaseline'
+import { ThemeProvider } from '@mui/material/styles'
+
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+
+import { theme } from '@/themes'
+
+Amplify.configure(outputs, { ssr: true })
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,7 +30,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
