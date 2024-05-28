@@ -60,3 +60,5 @@ amplifyconfiguration*
 .storybook
 
 dist
+
+benchmark-results
