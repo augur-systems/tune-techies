@@ -2,6 +2,7 @@
   "name": "tune-techies",
   "version": "0.1.0",
   "private": false,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build:worklets": "webpack --config webpack.worklets.config.js",
@@ -14,7 +15,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "benchmark": "node --loader ts-node/esm src/benchmarks/index.ts"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown ."
@@ -48,10 +50,12 @@
     "@testing-library/jest-dom": "^6.4.5",
     "@testing-library/react": "^15.0.7",
     "@types/audioworklet": "^0.0.55",
+    "@types/benchmark": "^2.1.5",
     "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "benchmark": "^2.1.4",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.3",
     "eslint-config-prettier": "^9.1.0",

@@ -58,3 +58,5 @@ amplifyconfiguration*
 
 *storybook.log
 .storybook
+
+dist
