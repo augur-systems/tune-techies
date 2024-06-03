@@ -25,7 +25,8 @@
       "@/hooks/*": ["src/hooks/*"],
       "@/lib/*": ["src/lib/*"],
       "@/themes/*": ["src/themes/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     "next-env.d.ts",
