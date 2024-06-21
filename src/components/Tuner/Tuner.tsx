@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Box, Button, Typography, Grid } from '@mui/material'
 import MicrophoneIcon from '@mui/icons-material/Mic'
 import Gauge from './Gauge'
+import { getMicrophone, isMicrophoneError, MicrophoneError } from '@/lib'
 
 const noteStrings = [
   'C',
@@ -75,6 +76,7 @@ export function Tuner() {
   const [frequency, setFrequency] = useState<number>(440)
   const [deviation, setDeviation] = useState<number>(0)
   const [isTuning, setIsTuning] = useState<boolean>(false)
+  const [microphoneError, setMicrophoneError] = useState<MicrophoneError | null>(null)
 
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
@@ -86,33 +88,39 @@ export function Tuner() {
     const analyser = audioContext.createAnalyser()
     analyserRef.current = analyser
 
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      const source = audioContext.createMediaStreamSource(stream)
-      source.connect(analyser)
-      analyser.fftSize = 2048
-      const bufferLength = analyser.fftSize
-      const dataArray = new Float32Array(bufferLength)
-
-      const detectPitch = () => {
-        analyser.getFloatTimeDomainData(dataArray)
-        const pitch = getPitch(dataArray, audioContext.sampleRate)
-        if (pitch !== -1) {
-          const detectedNote = getNoteString(getNote(pitch))
-          setFrequency(pitch)
-          setNote(detectedNote)
-          const deviation = Math.round(
-            1200 *
-              Math.log2(pitch / (440 * Math.pow(2, (getNote(pitch) - 69) / 12)))
-          )
-          setDeviation(deviation)
+    getMicrophone()
+      .then((stream) => {
+        if (isMicrophoneError(stream)) {
+          setMicrophoneError(stream)
+          return;
         }
-        requestAnimationFrame(detectPitch)
-      }
+        setIsTuning(true)
+        const source = audioContext.createMediaStreamSource(stream)
+        source.connect(analyser)
+        analyser.fftSize = 2048
+        const bufferLength = analyser.fftSize
+        const dataArray = new Float32Array(bufferLength)
 
-      detectPitch()
-    })
+        const detectPitch = () => {
+          analyser.getFloatTimeDomainData(dataArray)
+          const pitch = getPitch(dataArray, audioContext.sampleRate)
+          if (pitch !== -1) {
+            const detectedNote = getNoteString(getNote(pitch))
+            const deviation = Math.round(
+              1200 *
+              Math.log2(pitch / (440 * Math.pow(2, (getNote(pitch) - 69) / 12)))
+            )
+            if (!Number.isNaN(pitch) && !Number.isNaN(deviation)) {
+              setFrequency(pitch)
+              setNote(detectedNote)
+              setDeviation(deviation)
+            }
+          }
+          requestAnimationFrame(detectPitch)
+        }
 
-    setIsTuning(true)
+        detectPitch()
+      })
   }
 
   useEffect(() => {
@@ -142,36 +150,6 @@ export function Tuner() {
             {frequency.toFixed(2)} Hz
           </Typography>
           <MicrophoneIcon sx={{ mt: 2, color: '#E53935', fontSize: '3rem' }} />
-          <Grid container justifyContent="center" spacing={2} sx={{ mt: 2 }}>
-            <Grid item>
-              <Typography variant="h6" sx={{ color: '#757575' }}>
-                F
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h6" sx={{ color: '#757575' }}>
-                F#
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 'bold', color: '#E53935' }}
-              >
-                G
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h6" sx={{ color: '#757575' }}>
-                G#
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h6" sx={{ color: '#757575' }}>
-                A
-              </Typography>
-            </Grid>
-          </Grid>
         </>
       )}
     </Box>
