@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build:worklets": "webpack --config webpack.worklets.config.js",
-    "build": "next build && npm run build:worklets",
+    "build": "next build",
     "start": "npm run build && next start",
     "lint": "next lint",
     "format": "prettier --check .",
