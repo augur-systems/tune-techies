@@ -12,31 +12,29 @@ const roboto = Roboto({
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#556cd6',
+      main: '#81A1C1',
     },
     secondary: {
-      main: '#19857b',
+      main: '#D08770',
+    },
+    success: {
+      main: '#A3BE8C',
+    },
+    warning: {
+      main: '#EBCB8B',
+    },
+    info: {
+      main: '#88C0D0',
     },
     error: {
-      main: '#f44336',
+      main: '#BF616A',
     },
     background: {
-      default: '#fff',
+      default: '#ECEFF4',
     },
   },
   typography: {
-    fontFamily: roboto.style.fontFamily,
-  },
-  components: {
-    MuiAlert: {
-      styleOverrides: {
-        root: ({ ownerState }) => ({
-          ...(ownerState.severity === 'info' && {
-            backgroundColor: '#60a5fa',
-          }),
-        }),
-      },
-    },
+    fontFamily: 'Roboto, Arial, sans-serif',
   },
 })
 
