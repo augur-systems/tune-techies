@@ -1,74 +1,134 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { Box, Button, Typography, Grid } from '@mui/material'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import MicrophoneIcon from '@mui/icons-material/Mic'
-import Gauge from './Gauge'
-import { getMicrophone, isMicrophoneError, MicrophoneError } from '@/lib'
+import {
+  getMicrophone,
+  Microphone,
+  MicrophoneError,
+  MicrophoneErrorType,
+} from '@/lib'
+import { autocorrelatingPitchDetector } from '@/lib'
+import { Result } from '@/core'
+import { TuningErrorCard } from './TuningErrorCard'
 
-const noteStrings = [
-  'C',
-  'C#',
-  'D',
-  'D#',
-  'E',
-  'F',
-  'F#',
-  'G',
-  'G#',
-  'A',
-  'A#',
-  'B',
-]
-
-const getNote = (frequency: number) => {
-  const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2))
-  return Math.round(noteNum) + 69
+function getTuningErrorProps(error: MicrophoneError) {
+  switch (error.type) {
+    case MicrophoneErrorType.Unsupported: {
+      return {
+        title: 'Unsupported Browser',
+        description:
+          'Your browser does not support microphone access. Please try using a different browser that supports microphone access.',
+        suggestions: [
+          'Use the latest version of Google Chrome, Mozilla Firefox, Safari, or Microsoft Edge.',
+        ],
+      }
+    }
+    case MicrophoneErrorType.PermissionDenied: {
+      return {
+        title: 'Permission Denied',
+        description:
+          'Access to the microphone was denied. Please follow the steps below to allow microphone access:',
+        suggestions: [
+          'Check your browser settings to ensure microphone access is allowed.',
+          'Reload the page and try again.',
+          'Ensure no other applications are using the microphone.',
+        ],
+      }
+    }
+    case MicrophoneErrorType.DeviceNotFound: {
+      return {
+        title: 'Microphone Not Found',
+        description:
+          'No microphone device was found. Please ensure your microphone is connected and recognized by your system:',
+        suggestions: [
+          'Check if the microphone is properly connected.',
+          'Ensure the microphone is not muted.',
+          'Check system settings to ensure the microphone is recognized.',
+        ],
+      }
+    }
+    case MicrophoneErrorType.DeviceNotReadable: {
+      return {
+        title: 'Microphone Not Readable',
+        description:
+          'The microphone device is not readable due to a hardware error. Please try the following solutions:',
+        suggestions: [
+          'Ensure the microphone is properly connected.',
+          'Try using a different microphone.',
+          'Restart your computer and try again.',
+        ],
+      }
+    }
+    case MicrophoneErrorType.Security: {
+      return {
+        title: 'Security Error',
+        description:
+          'Access to the microphone is blocked due to security settings. Please follow the steps below to fix this issue:',
+        suggestions: [
+          'Ensure your site is served over HTTPS.',
+          'Check your browser settings to enable media access.',
+          'Disable any browser extensions that might be blocking media access.',
+          'Ensure all content on the page is served over HTTPS to avoid mixed content issues.',
+        ],
+      }
+    }
+    case MicrophoneErrorType.Unexpected:
+    default: {
+      return {
+        title: 'Unknown Error',
+        description:
+          'An unexpected error occurred. Please try again or contact support if the issue persists.',
+        suggestions: [
+          'Reload the page and try again.',
+          'If the issue persists, contact support for further assistance.',
+        ],
+      }
+    }
+  }
 }
 
-const getNoteString = (note: number) => {
-  return noteStrings[note % 12]
+type IdleTunerProps = {
+  onStart: () => void
 }
 
-function getPitch(buffer: Float32Array, sampleRate: number) {
-  let SIZE = buffer.length
-  let MAX_SAMPLES = Math.floor(SIZE / 2)
-  let bestOffset = -1
-  let bestCorrelation = 0
-  let rms = 0
+function IdleTuner({ onStart }: IdleTunerProps) {
+  return (
+    <Box sx={{ textAlign: 'center', mt: 5 }}>
+      <Button variant="contained" color="primary" onClick={onStart}>
+        Start Tuner
+      </Button>
+    </Box>
+  )
+}
 
-  for (let i = 0; i < SIZE; i++) {
-    let val = buffer[i]
-    rms += val * val
-  }
-  rms = Math.sqrt(rms / SIZE)
+type ActiveTunerProps = {
+  note: string
+  frequency: number
+  deviation: number
+}
 
-  if (rms < 0.01) return -1 // Not enough signal
-
-  let correlations = new Array(MAX_SAMPLES)
-
-  for (let offset = 0; offset < MAX_SAMPLES; offset++) {
-    let correlation = 0
-
-    for (let i = 0; i < MAX_SAMPLES; i++) {
-      correlation += buffer[i] * buffer[i + offset]
-    }
-    correlations[offset] = correlation
-
-    if (correlation > bestCorrelation) {
-      bestCorrelation = correlation
-      bestOffset = offset
-    }
-  }
-
-  if (bestCorrelation > 0.01) {
-    let shift =
-      (correlations[bestOffset + 1] - correlations[bestOffset - 1]) /
-      correlations[bestOffset]
-    return sampleRate / (bestOffset + 8 * shift)
-  }
-
-  return -1
+function ActiveTuner({ note, frequency, deviation }: ActiveTunerProps) {
+  return (
+    <Stack direction="column" spacing={1}>
+      <Typography variant="h2" color="primary">
+        {note}
+      </Typography>
+      <Typography variant="h6" color="secondary">
+        {frequency.toFixed(2)} Hz
+      </Typography>
+      <Stack direction="row" spacing={2}>
+        <Typography variant="subtitle2" color="info">
+          {deviation.toFixed(2)} Cents
+        </Typography>
+        <MicrophoneIcon color="success" />
+      </Stack>
+    </Stack>
+  )
 }
 
 export function Tuner() {
@@ -76,52 +136,58 @@ export function Tuner() {
   const [frequency, setFrequency] = useState<number>(440)
   const [deviation, setDeviation] = useState<number>(0)
   const [isTuning, setIsTuning] = useState<boolean>(false)
-  const [microphoneError, setMicrophoneError] = useState<MicrophoneError | null>(null)
+  const [microphoneError, setMicrophoneError] =
+    useState<MicrophoneError | null>(null)
 
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
 
   const startTuner = () => {
-    const audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)()
+    const audioContext = new AudioContext()
     audioContextRef.current = audioContext
     const analyser = audioContext.createAnalyser()
     analyserRef.current = analyser
 
-    getMicrophone()
-      .then((stream) => {
-        if (isMicrophoneError(stream)) {
-          setMicrophoneError(stream)
-          return;
-        }
-        setIsTuning(true)
-        const source = audioContext.createMediaStreamSource(stream)
-        source.connect(analyser)
-        analyser.fftSize = 2048
-        const bufferLength = analyser.fftSize
-        const dataArray = new Float32Array(bufferLength)
-
-        const detectPitch = () => {
-          analyser.getFloatTimeDomainData(dataArray)
-          const pitch = getPitch(dataArray, audioContext.sampleRate)
-          if (pitch !== -1) {
-            const detectedNote = getNoteString(getNote(pitch))
-            const deviation = Math.round(
-              1200 *
-              Math.log2(pitch / (440 * Math.pow(2, (getNote(pitch) - 69) / 12)))
-            )
-            if (!Number.isNaN(pitch) && !Number.isNaN(deviation)) {
-              setFrequency(pitch)
-              setNote(detectedNote)
-              setDeviation(deviation)
+    getMicrophone().then((result: Result<Microphone, MicrophoneError>) => {
+      result.peek({
+        ok: (microphone: MediaStream) => {
+          setIsTuning(true)
+          const source = audioContext.createMediaStreamSource(microphone)
+          source.connect(analyser)
+          analyser.fftSize = 2048
+          const bufferLength = analyser.fftSize
+          const dataArray = new Float32Array(bufferLength)
+          const detector = autocorrelatingPitchDetector(audioContext.sampleRate)
+          const detectPitch = () => {
+            analyser.getFloatTimeDomainData(dataArray)
+            const pitch = detector(dataArray)
+            const noteName = pitch.getNoteName()
+            const frequency = pitch.getFrequency()
+            if (noteName && !Number.isNaN(frequency)) {
+              setFrequency(pitch.getFrequency())
+              setNote(pitch.getNoteName())
+              setDeviation(pitch.getDeviation())
             }
-          }
-          requestAnimationFrame(detectPitch)
-        }
 
-        detectPitch()
+            requestAnimationFrame(detectPitch)
+          }
+
+          detectPitch()
+        },
+        fail: (error: MicrophoneError) => {
+          setMicrophoneError(error)
+          console.error(error)
+        },
       })
+    })
   }
+
+  const handleRetry = useCallback(() => {
+    if (!isTuning) {
+      setMicrophoneError(null)
+      setIsTuning(false)
+    }
+  }, [setMicrophoneError, setIsTuning, isTuning])
 
   useEffect(() => {
     return () => {
@@ -131,29 +197,22 @@ export function Tuner() {
     }
   }, [])
 
-  return (
-    <Box sx={{ textAlign: 'center', mt: 5 }}>
-      {!isTuning ? (
-        <Button variant="contained" color="primary" onClick={startTuner}>
-          Start Tuner
-        </Button>
-      ) : (
-        <>
-          <Gauge deviation={deviation} />
-          <Typography
-            variant="h1"
-            sx={{ mt: 2, fontWeight: 'bold', color: '#E53935' }}
-          >
-            {note}
-          </Typography>
-          <Typography variant="h4" sx={{ mt: 1, color: '#757575' }}>
-            {frequency.toFixed(2)} Hz
-          </Typography>
-          <MicrophoneIcon sx={{ mt: 2, color: '#E53935', fontSize: '3rem' }} />
-        </>
-      )}
-    </Box>
-  )
-}
+  if (microphoneError) {
+    const { title, description, suggestions } =
+      getTuningErrorProps(microphoneError)
+    return (
+      <TuningErrorCard
+        title={title}
+        description={description}
+        suggestions={suggestions}
+        onRetry={handleRetry}
+      />
+    )
+  }
 
-export default Tuner
+  if (!isTuning) {
+    return <IdleTuner onStart={startTuner} />
+  }
+
+  return <ActiveTuner note={note} frequency={frequency} deviation={deviation} />
+}
