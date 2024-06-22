@@ -1,10 +1,17 @@
 import {
   getMicrophone,
-  isMicrophoneError,
+  Microphone,
   MicrophoneError,
   MicrophoneErrorType,
 } from './microphone'
 
-export type { MicrophoneError }
+import { Pitch, autocorrelatingPitchDetector } from './audio'
 
-export { getMicrophone, isMicrophoneError, MicrophoneErrorType }
+export type { MicrophoneError, Microphone }
+
+export {
+  getMicrophone,
+  autocorrelatingPitchDetector,
+  Pitch,
+  MicrophoneErrorType,
+}

@@ -1,6 +1,11 @@
-import { MicrophoneError, MicrophoneErrorType } from './error'
+import { Result } from '@/core'
+import {
+  handleUnknownMicrophoneError,
+  MicrophoneError,
+  MicrophoneErrorType,
+} from './error'
 
-type Microphone = MediaStream | MicrophoneError
+export type Microphone = MediaStream
 
 interface MicrophoneOptions {
   readonly deviceId?: string
@@ -9,11 +14,15 @@ interface MicrophoneOptions {
 }
 
 interface MicrophoneProvider {
-  (options: MicrophoneOptions): Promise<Microphone>
+  (options: MicrophoneOptions): Promise<Result<Microphone, MicrophoneError>>
 }
 
-const UnsupportedMicrophoneProvider: MicrophoneProvider = async () => {
-  return { type: MicrophoneErrorType.Unsupported }
+const UnsupportedMicrophoneProvider: MicrophoneProvider = async (
+  _: MicrophoneOptions
+): Promise<Result<Microphone, MicrophoneError>> => {
+  return Result.fail<Microphone, MicrophoneError>({
+    type: MicrophoneErrorType.Unsupported,
+  })
 }
 
 function getMediaDevices(): MediaDevices | undefined {
@@ -25,31 +34,16 @@ function getMediaDevices(): MediaDevices | undefined {
 function getMicrophoneProvider(): MicrophoneProvider {
   const devices = getMediaDevices()
   if (devices !== undefined && typeof devices.getUserMedia === 'function') {
-    return async (options) =>
-      devices
+    return async (options: MicrophoneOptions) => {
+      return devices
         .getUserMedia({ audio: true, ...options })
-        .catch((cause: DOMException) => {
-          const { name, message } = cause
-          switch (name) {
-            case 'NotAllowedError':
-            case 'SecurityError': {
-              return { type: MicrophoneErrorType.PermissionDenied, cause }
-            }
-            case 'NotFoundError':
-            case 'NotReadableError':
-            case 'OverconstrainedError':
-            case 'AbortError':
-            case 'TypeError':
-            case 'InvalidStateError':
-            default: {
-              return {
-                type: MicrophoneErrorType.Unexpected,
-                message: `Unexpected Microphone Error: name: ${name}: message: ${message}`,
-                cause,
-              }
-            }
-          }
+        .then((stream: Microphone) => {
+          return Result.ok<Microphone, MicrophoneError>(stream)
         })
+        .catch((cause: unknown) => {
+          return Result.fail(handleUnknownMicrophoneError(cause))
+        })
+    }
   }
 
   return UnsupportedMicrophoneProvider
@@ -62,8 +56,10 @@ function getDefaultOptions() {
   }
 }
 
-export function getMicrophone(
+export async function getMicrophone(
   options?: MicrophoneOptions
-): Promise<Microphone> {
-  return getMicrophoneProvider()(options || getDefaultOptions())
+): Promise<Result<Microphone, MicrophoneError>> {
+  const provider = getMicrophoneProvider()
+  const result = await provider(options || getDefaultOptions())
+  return result
 }

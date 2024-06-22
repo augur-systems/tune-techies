@@ -1,9 +1,5 @@
-import {
-  MicrophoneError,
-  MicrophoneErrorType,
-  isMicrophoneError,
-} from './error'
-import { getMicrophone } from './microphone'
+import { MicrophoneError, MicrophoneErrorType } from './error'
+import { getMicrophone, Microphone } from './microphone'
 
-export type { MicrophoneError }
-export { getMicrophone, isMicrophoneError, MicrophoneErrorType }
+export type { MicrophoneError, Microphone }
+export { getMicrophone, MicrophoneErrorType }
