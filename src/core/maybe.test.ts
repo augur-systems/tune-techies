@@ -119,6 +119,29 @@ describe('Maybe', () => {
     })
   })
 
+  describe('filter', () => {
+    it('should return Just if predicate is true', () => {
+      const maybe = Maybe.just(42)
+      const result = maybe.filter((x) => x > 40)
+      expect(result.isJust()).toBe(true)
+      expect(result.getOrElse(0)).toBe(42)
+    })
+
+    it('should return Nothing if predicate is false', () => {
+      const maybe = Maybe.just(42)
+      const result = maybe.filter((x) => x < 40)
+      expect(result.isJust()).toBe(false)
+      expect(result.getOrElse(0)).toBe(0)
+    })
+
+    it('should return Nothing for Nothing case', () => {
+      const maybe = Maybe.nothing<number>()
+      const result = maybe.filter((x) => x > 40)
+      expect(result.isJust()).toBe(false)
+      expect(result.getOrElse(0)).toBe(0)
+    })
+  })
+
   describe('getOrElse', () => {
     it('should return the value in Just case', () => {
       const maybe = Maybe.just(42)

@@ -58,6 +58,13 @@ export abstract class Maybe<V> {
   abstract flatMap<U>(fn: (value: V) => Maybe<U>): Maybe<U>
 
   /**
+   * Filters the value in Just case.
+   * @param fn Predicate function to filter the value.
+   * @returns A new Maybe with the value if it satisfies the predicate, otherwise Nothing.
+   */
+  abstract filter(fn: (value: V) => boolean): Maybe<V>
+
+  /**
    * Returns the value if Just, otherwise returns the default value.
    * @param defaultValue The default value to return in Nothing case.
    * @returns The value in Just case or the default value.
@@ -100,6 +107,10 @@ class Just<V> extends Maybe<V> {
     return fn(this.value)
   }
 
+  filter(fn: (value: V) => boolean): Maybe<V> {
+    return fn(this.value) ? this : new Nothing<V>()
+  }
+
   getOrElse(_: V): V {
     return this.value
   }
@@ -132,6 +143,10 @@ class Nothing<V> extends Maybe<V> {
 
   flatMap<U>(_: (value: V) => Maybe<U>): Maybe<U> {
     return new Nothing<U>()
+  }
+
+  filter(_: (value: V) => boolean): Maybe<V> {
+    return this
   }
 
   getOrElse(defaultValue: V): V {
