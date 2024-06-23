@@ -1,9 +1,9 @@
-export enum ResultType {
+enum ResultType {
   Ok,
   Fail,
 }
 
-export interface Handler<V, E, U> {
+interface ResultHandler<V, E, U> {
   ok: (value: V) => U
   fail: (error: E) => U
 }
@@ -49,14 +49,14 @@ export abstract class Result<V, E> {
    * @param handler Handler to process the result.
    * @returns The result of the handler.
    */
-  abstract handle<U>(handler: Handler<V, E, U>): U
+  abstract handle<U>(handler: ResultHandler<V, E, U>): U
 
   /**
    * Peeks at the value or error without transforming the result.
    * @param handler Handler to process the value or error.
    * @returns The original result.
    */
-  abstract peek(handler: Handler<V, E, void>): Result<V, E>
+  abstract peek(handler: ResultHandler<V, E, void>): Result<V, E>
 
   /**
    * Chains the result.
@@ -96,11 +96,11 @@ class Ok<V, E> extends Result<V, E> {
     return this as unknown as Result<V, F>
   }
 
-  handle<U>(handler: Handler<V, E, U>): U {
+  handle<U>(handler: ResultHandler<V, E, U>): U {
     return handler.ok(this.value)
   }
 
-  peek(effect: Handler<V, E, void>): Result<V, E> {
+  peek(effect: ResultHandler<V, E, void>): Result<V, E> {
     effect.ok(this.value)
     return this
   }
@@ -135,11 +135,11 @@ class Fail<V, E> extends Result<V, E> {
     return new Fail(fn(this.error))
   }
 
-  handle<U>(handler: Handler<V, E, U>): U {
+  handle<U>(handler: ResultHandler<V, E, U>): U {
     return handler.fail(this.error)
   }
 
-  peek(effect: Handler<V, E, void>): Result<V, E> {
+  peek(effect: ResultHandler<V, E, void>): Result<V, E> {
     effect.fail(this.error)
     return this
   }

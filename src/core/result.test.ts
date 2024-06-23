@@ -1,4 +1,4 @@
-import { Handler, Result } from './result'
+import { Result } from './result'
 
 describe('Result', () => {
   describe('Factories', () => {
@@ -95,21 +95,21 @@ describe('Result', () => {
 
   describe('handle', () => {
     it('handle should process Ok result', () => {
-      const result = Result.ok<number, string>(42)
-      const handler: Handler<number, string, string> = {
-        ok: (value) => `Value is ${value}`,
-        fail: (error) => `Error is ${error}`,
-      }
-      expect(result.handle(handler)).toBe('Value is 42')
+      expect(
+        Result.ok<number, string>(42).handle({
+          ok: (value) => `Value is ${value}`,
+          fail: (error) => `Error is ${error}`,
+        })
+      ).toBe('Value is 42')
     })
 
     it('handle should process Fail result', () => {
-      const result = Result.fail<number, string>('error')
-      const handler: Handler<number, string, string> = {
-        ok: (value) => `Value is ${value}`,
-        fail: (error) => `Error is ${error}`,
-      }
-      expect(result.handle(handler)).toBe('Error is error')
+      expect(
+        Result.fail<number, string>('error').handle({
+          ok: (value) => `Value is ${value}`,
+          fail: (error) => `Error is ${error}`,
+        })
+      ).toBe('Error is error')
     })
   })
 
