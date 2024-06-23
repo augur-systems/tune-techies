@@ -3,6 +3,11 @@ export enum MaybeType {
   Nothing,
 }
 
+export interface MaybeHandler<V, U> {
+  just: (value: V) => U
+  nothing: () => U
+}
+
 /**
  * Maybe is a type that represents either a value (Just) or no value (Nothing).
  * It provides methods for functional programming, such as mapping over values,
@@ -72,6 +77,13 @@ export abstract class Maybe<V> {
   abstract getOrElse(defaultValue: V): V
 
   /**
+   * Handles the Maybe with the provided handler.
+   * @param handler Handler to process the Maybe.
+   * @returns The result of the handler.
+   */
+  abstract handle<U>(handler: MaybeHandler<V, U>): U
+
+  /**
    * Compares the current Maybe with another Maybe for equality.
    * @param other The other Maybe to compare with.
    * @returns True if both Maybes are equal, otherwise false.
@@ -115,6 +127,10 @@ class Just<V> extends Maybe<V> {
     return this.value
   }
 
+  handle<U>(handler: MaybeHandler<V, U>): U {
+    return handler.just(this.value)
+  }
+
   equals(other: Maybe<V>): boolean {
     return other instanceof Just && this.value === other.value
   }
@@ -151,6 +167,10 @@ class Nothing<V> extends Maybe<V> {
 
   getOrElse(defaultValue: V): V {
     return defaultValue
+  }
+
+  handle<U>(handler: MaybeHandler<V, U>): U {
+    return handler.nothing()
   }
 
   equals(other: Maybe<V>): boolean {

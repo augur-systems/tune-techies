@@ -154,6 +154,26 @@ describe('Maybe', () => {
     })
   })
 
+  describe('handle', () => {
+    it('should handle Just case', () => {
+      expect(
+        Maybe.just(42).handle({
+          just: (value) => `Value is ${value}`,
+          nothing: () => 'No value',
+        })
+      ).toBe('Value is 42')
+    })
+
+    it('should handle Nothing case', () => {
+      expect(
+        Maybe.nothing<number>().handle({
+          just: (value) => `Value is ${value}`,
+          nothing: () => 'No value',
+        })
+      ).toBe('No value')
+    })
+  })
+
   describe('isJust', () => {
     it('should return true for Just value', () => {
       const maybe = Maybe.just(42)
