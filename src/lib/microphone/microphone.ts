@@ -1,4 +1,4 @@
-import { Result } from '@/core'
+import { Maybe, Result } from '@/core'
 import {
   handleUnknownMicrophoneError,
   MicrophoneError,
@@ -25,28 +25,31 @@ const UnsupportedMicrophoneProvider: MicrophoneProvider = async (
   })
 }
 
-function getMediaDevices(): MediaDevices | undefined {
+function getMediaDevices(): Maybe<MediaDevices> {
   return typeof navigator != 'undefined' && navigator.mediaDevices
-    ? navigator.mediaDevices
-    : undefined
+    ? Maybe.just(navigator.mediaDevices).filter(
+        (devices) => typeof devices.getUserMedia === 'function'
+      )
+    : Maybe.nothing()
 }
 
-function getMicrophoneProvider(): MicrophoneProvider {
-  const devices = getMediaDevices()
-  if (devices !== undefined && typeof devices.getUserMedia === 'function') {
-    return async (options: MicrophoneOptions) => {
-      return devices
-        .getUserMedia({ audio: true, ...options })
-        .then((stream: Microphone) => {
-          return Result.ok<Microphone, MicrophoneError>(stream)
-        })
-        .catch((cause: unknown) => {
-          return Result.fail(handleUnknownMicrophoneError(cause))
-        })
-    }
-  }
+function getMediaProvider(devices: MediaDevices): MicrophoneProvider {
+  return async (options) =>
+    devices
+      .getUserMedia({ audio: options })
+      .then((stream: Microphone) =>
+        Result.ok<Microphone, MicrophoneError>(stream)
+      )
+      .catch((cause: unknown) =>
+        Result.fail(handleUnknownMicrophoneError(cause))
+      )
+}
 
-  return UnsupportedMicrophoneProvider
+function getMicrophoneProvider() {
+  return getMediaDevices().handle<MicrophoneProvider>({
+    nothing: () => UnsupportedMicrophoneProvider,
+    just: (devices: MediaDevices) => getMediaProvider(devices),
+  })
 }
 
 function getDefaultOptions() {
@@ -56,10 +59,6 @@ function getDefaultOptions() {
   }
 }
 
-export async function getMicrophone(
-  options?: MicrophoneOptions
-): Promise<Result<Microphone, MicrophoneError>> {
-  const provider = getMicrophoneProvider()
-  const result = await provider(options || getDefaultOptions())
-  return result
+export async function getMicrophone(options?: MicrophoneOptions) {
+  return getMicrophoneProvider()(options || getDefaultOptions())
 }
