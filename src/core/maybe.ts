@@ -1,9 +1,9 @@
-export enum MaybeType {
+enum MaybeType {
   Just,
   Nothing,
 }
 
-export interface MaybeHandler<V, U> {
+interface MaybeHandler<V, U> {
   just: (value: V) => U
   nothing: () => U
 }
